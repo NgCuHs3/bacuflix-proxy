@@ -148,9 +148,34 @@ function handleRequest(req, res) {
   const outgoingHeaders = filterHopByHopHeaders(req.headers);
   outgoingHeaders.host = targetUrl.host;
 
-  // Preserve user-agent if missing or set default
-  if (!outgoingHeaders["user-agent"]) {
-    outgoingHeaders["user-agent"] = "Bacuflix-Proxy/1.0";
+  // Set standard browser User-Agent
+  outgoingHeaders["user-agent"] = req.headers["user-agent"] ||
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+
+  // Forward client IP if available
+  const clientIp = (req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || "").split(",")[0].trim();
+  if (clientIp) {
+    outgoingHeaders["x-forwarded-for"] = clientIp;
+    outgoingHeaders["x-real-ip"] = clientIp;
+  }
+
+  // Set upstream required Referer and Origin for video streaming CDNs
+  const hostLower = targetUrl.hostname.toLowerCase();
+  if (
+    hostLower.includes("phim1280") ||
+    hostLower.includes("kkphim") ||
+    hostLower.includes("kvp726") ||
+    hostLower.includes("phimapi") ||
+    hostLower.includes("apiaz")
+  ) {
+    outgoingHeaders["referer"] = "https://player.phimapi.com/";
+    outgoingHeaders["origin"] = "https://player.phimapi.com";
+  } else if (hostLower.includes("nguonc") || hostLower.includes("streamc")) {
+    outgoingHeaders["referer"] = "https://phim.nguonc.com/";
+    outgoingHeaders["origin"] = "https://phim.nguonc.com";
+  } else if (hostLower.includes("vsmov") || hostLower.includes("streamvsmov")) {
+    outgoingHeaders["referer"] = "https://vsmov.com/";
+    outgoingHeaders["origin"] = "https://vsmov.com";
   }
 
   const transport = targetUrl.protocol === "https:" ? https : http;
