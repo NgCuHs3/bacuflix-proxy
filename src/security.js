@@ -115,6 +115,33 @@ function isHostAllowed(hostname, allowedHosts, upstreamHostname) {
   return false;
 }
 
+const DOMESTIC_CDN_HOSTS = [
+  "phim1280.tv",
+  "kvp726.com",
+  "kkphimplayer6.com",
+  "apiaz.xyz",
+  "abfedgecanme.com",
+  "streamc.xyz",
+  "streamvsmov.com",
+  "vsmov.com",
+  "opstream.com",
+  "opstream1.com",
+  "opstream2.com",
+  "opstream3.com",
+  "bytefury.top"
+];
+
+function isDomesticCdn(hostname) {
+  if (!hostname || typeof hostname !== "string") return false;
+  const host = hostname.toLowerCase().trim();
+  for (const cdn of DOMESTIC_CDN_HOSTS) {
+    if (host === cdn || host.endsWith("." + cdn)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function sanitizePath(rawPath) {
   if (!rawPath || typeof rawPath !== "string") return "/";
   // Strip null bytes and control chars
@@ -153,6 +180,8 @@ module.exports = {
   isPrivateIp,
   isSsrfSafe,
   isHostAllowed,
+  isDomesticCdn,
+  DOMESTIC_CDN_HOSTS,
   sanitizePath,
   filterHopByHopHeaders,
   getCorsHeaders

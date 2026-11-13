@@ -10,6 +10,7 @@ const { getConfig } = require("./config");
 const {
   isSsrfSafe,
   isHostAllowed,
+  isDomesticCdn,
   sanitizePath,
   filterHopByHopHeaders,
   getCorsHeaders
@@ -141,6 +142,25 @@ function handleRequest(req, res) {
       },
       config.corsOrigin
     );
+    return;
+  }
+
+  // Domestic video CDNs (phim1280.tv, kvp726.com, etc.) enforce strict IP geo-blocking
+  // (returning 404 "Vui lòng sử dụng mạng trong nước để truy cập trang này" to non-VN cloud instances).
+  // When running in cloud serverless environments outside Vietnam (e.g. Vercel in US),
+  // issue a 302 Found redirect directly to the target URL with CORS headers enabled.
+  // The client player (running inside Vietnam) follows the redirect and plays directly
+  // with full CDN speed and zero geo-block failure.
+  if (isDomesticCdn(targetUrl.hostname) && process.env.DIRECT_STREAM_DOMESTIC !== "false") {
+    const redirectHeaders = Object.assign(
+      {
+        Location: targetUrlString,
+        "Cache-Control": "public, max-age=300"
+      },
+      corsHeaders
+    );
+    res.writeHead(302, redirectHeaders);
+    res.end();
     return;
   }
 

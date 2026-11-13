@@ -185,7 +185,7 @@ async function runTests() {
 
   // Set UPSTREAM_BASE_URL to mockUpstreamServer
   process.env.UPSTREAM_BASE_URL = `http://127.0.0.1:${mockUpstreamPort}`;
-  process.env.ALLOWED_STREAM_HOSTS = `127.0.0.1,localhost,phimapi.com,phimimg.com,cdn.example.com`;
+  process.env.ALLOWED_STREAM_HOSTS = `127.0.0.1,localhost,phimapi.com,phimimg.com,cdn.example.com,phim1280.tv,kvp726.com`;
 
   // 2. Setup Proxy Server
   await new Promise((resolve, reject) => {
@@ -463,8 +463,24 @@ async function runTests() {
 
     console.log("✓ Test 12: Security (SSRF, Host Whitelist, Path Sanitization, Health Check) passed.");
 
+    // -------------------------------------------------------------
+    // Test 13: Domestic CDN Redirection (Prevent US IP Geo-Block)
+    // -------------------------------------------------------------
+    const targetCdnUrl = "https://s2.phim1280.tv/20240103/7WZ13rbN/index.m3u8";
+    const resDomestic = await request({
+      hostname: "127.0.0.1",
+      port: proxyPort,
+      path: "/api/proxy?url=" + encodeURIComponent(targetCdnUrl),
+      method: "GET"
+    });
+    assert.equal(resDomestic.statusCode, 302, "Domestic CDN stream should return 302 Found redirect");
+    assert.equal(resDomestic.headers["location"], targetCdnUrl, "Location header should match target CDN URL");
+    assert.equal(resDomestic.headers["access-control-allow-origin"], "*", "CORS should be enabled on redirect");
+
+    console.log("✓ Test 13: Domestic CDN Redirection (302 Found) passed.");
+
     console.log("\n=======================================================");
-    console.log("ALL 12 TEST SUITES COMPLETED AND PASSED SUCCESSFULLY!");
+    console.log("ALL 13 TEST SUITES COMPLETED AND PASSED SUCCESSFULLY!");
     console.log("=======================================================\n");
   } finally {
     if (proxyServer) proxyServer.close();
