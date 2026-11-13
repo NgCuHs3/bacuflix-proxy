@@ -1,0 +1,25 @@
+{
+  "name": "bacuflix-proxy",
+  "version": "1.0.0",
+  "description": "Intermediate reverse proxy server for Bacuflix streaming and movie API, deployable to Vercel",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "node test/proxy.test.js",
+    "test:live": "node test/live.test.js"
+  },
+  "keywords": [
+    "bacuflix",
+    "reverse-proxy",
+    "hls",
+    "streaming",
+    "vercel",
+    "serverless"
+  ],
+  "author": "Bacuflix Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
